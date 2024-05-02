@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -28,21 +29,25 @@ public class ReceiveCouponService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
-    public Coupon limitedCouponReceive(String data) throws JsonProcessingException {
+    public void limitedCouponReceive(String data) throws JsonProcessingException {
 
         KafkaLimitedCoupon limitedCoupon = objectMapper.readValue(data, KafkaLimitedCoupon.class);
 
-        User user = userRepository.findById(limitedCoupon.getUserId()).orElseThrow(()-> new CatchException(ResponseCode.USER_NOT_FOUND));
-        Coupon coupon = couponRepository.findById(limitedCoupon.getCouponId()).orElseThrow(()->new CatchException(ResponseCode.COUPON_NOT_FOUND));
+        Optional<User> user = userRepository.findById(limitedCoupon.getUserId());
+        if(user.isPresent()) {
+            Optional<Coupon> coupon = couponRepository.findById(limitedCoupon.getCouponId());
 
-        List<ReceiveCoupon> receiveCouponList = receiveCouponRepository.findByCouponIdAndUserId(coupon.getId(),user.getId());
+            if(coupon.isPresent()) {
+                List<ReceiveCoupon> receiveCouponList = receiveCouponRepository.findByCouponIdAndUserId(coupon.get().getId(),user.get().getId());
 
-        if(receiveCouponList.isEmpty()) {
-            ReceiveCoupon receiveCoupon = ReceiveCoupon.builder().coupon(coupon).user(user).couponStatus(CouponStatus.ISSUANCE).build();
-            receiveCouponRepository.save(receiveCoupon);
+                if(receiveCouponList.isEmpty()) {
+                    ReceiveCoupon receiveCoupon = ReceiveCoupon.builder().coupon(coupon.get()).user(user.get()).couponStatus(CouponStatus.ISSUANCE).build();
+                    receiveCouponRepository.save(receiveCoupon);
+                }
+            }
+
         }
 
-        return coupon;
     }
 
 
