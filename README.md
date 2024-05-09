@@ -352,7 +352,7 @@ CRM 마케팅이란, Customer Relationship Management의 약자로 고객 관계
 </br>
 
 <details>
-<summary> <h1> 배포 과정 </h1> </summary>
+<summary> <h1> 배포 결과 테스트 </h1> </summary>
 
 ## S3 버킷 생성
 
